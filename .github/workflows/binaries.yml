@@ -1,0 +1,54 @@
+name: buildcache
+
+on:
+  workflow_dispatch:
+
+jobs:
+  buildcache:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: 'Windows'
+            os: windows-2022
+            buildcache_ext: .exe
+            archive_extra: windows
+          - name: 'Linux (Intel)'
+            os: ubuntu-22.04
+            archive_extra: linux-intel
+          - name: 'Linux (ARM)'
+            os: ubuntu-22.04-arm
+            archive_extra: linux-arm
+          - name: 'macOS (Intel)'
+            os: macos-13
+            archive_extra: macos-intel
+          - name: 'macOS (ARM)'
+            os: macos-14
+            archive_extra: macos-arm
+    env:
+      BUILDCACHE_VERSION: 0.31.3
+    steps:
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+      - name: Configure MSVC
+        if: ${{ runner.os == 'Windows' }}
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Retrieve buildcache
+        run: |
+          curl -Ls https://gitlab.com/bits-n-bites/buildcache/-/archive/v${{ env.BUILDCACHE_VERSION }}/buildcache-v${{ env.BUILDCACHE_VERSION }}.zip -o buildcache-v${{ env.BUILDCACHE_VERSION }}.zip
+          unzip -qq buildcache-v${{ env.BUILDCACHE_VERSION }}.zip
+      - name: Build buildcache
+        run: |
+          cd buildcache-v${{ env.BUILDCACHE_VERSION }}
+          mkdir build
+          cd build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../src
+          ninja
+          tar -czf ${{ github.workspace }}/buildcache-${{ matrix.archive_extra }}.tar.gz buildcache${{ matrix.buildcache_ext }}
+      - name: Upload buildcache artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildcache-${{ matrix.archive_extra }}
+          path: ${{ github.workspace }}/buildcache-${{ matrix.archive_extra }}.tar.gz
