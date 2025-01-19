@@ -12,18 +12,10 @@ jobs:
       GITHUB_TOKEN: '${{ github.token }}'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - run: |
-          yarn
-      - run: |
-          yarn all
-  build-ubuntu-20-04: # make sure build/ci work properly
-    env:
-      GITHUB_TOKEN: '${{ github.token }}'
-      ACTION_BUILDCACHE_TAG: "v0.27.6"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '>=20.0.0'
       - run: |
           yarn
       - run: |
@@ -32,22 +24,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest, windows-latest]
+        os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm, macos-14]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./
         with:
           cache_key: build-test-${{ matrix.os }}
-  test-ubuntu-20-04: # make sure the action works on a clean machine without building
-    # https://github.com/mbitsnbites/buildcache/issues/291
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./
-        with:
-          cache_key: build-test-${{ matrix.os }}
-          buildcache_tag: v0.27.6
-

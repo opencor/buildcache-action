@@ -1,13 +1,12 @@
 import * as cache from '@actions/cache'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import * as github from '@actions/github'
 import * as io from '@actions/io'
+import * as os from 'os'
 import * as path from 'path'
 import * as toolcache from '@actions/tool-cache'
 
 import {
-  getAccessToken,
   getCacheDir,
   getCacheKeys,
   getEnvVar,
@@ -20,82 +19,52 @@ import {
 // Downloads the latest buildcache release for this OS
 // accessToken is a valid github token to access APIs
 // returns path to the downloaded file
-export async function downloadLatest(accessToken: string): Promise<string> {
+export async function downloadLatest(): Promise<string> {
   // Determine correct file name
-  let filename = 'buildcache-macos.zip' // our default
-  switch (process.platform) {
-    case 'win32':
-      filename = 'buildcache-windows.zip'
-      break
+  let filename = 'buildcache-windows.tar.gz' // our default
+  switch (os.platform()) {
     case 'linux':
-      filename = 'buildcache-linux.tar.gz'
+      if (os.arch() === 'x64') {
+        filename = 'buildcache-linux-intel.tar.gz'
+      } else {
+        filename = 'buildcache-linux-arm.tar.gz'
+      }
+      break
+    case 'darwin':
+      if (os.arch() === 'x64') {
+        filename = 'buildcache-macos-intel.tar.gz'
+      } else {
+        filename = 'buildcache-macos-arm.tar.gz'
+      }
       break
   }
   core.info(`buildcache: release file based on runner os is ${filename}`)
 
-  // Grab the releases page for the for the buildcache project
-  const octokit = github.getOctokit(accessToken)
-
-  // Should we get the latest, or has the user provided a tag?
-  const buildcacheTag = core.getInput('buildcache_tag')
-  let releaseInfo
-  if (!buildcacheTag || buildcacheTag.toLowerCase() === 'latest') {
-    releaseInfo = await octokit.rest.repos.getLatestRelease({
-      owner: 'mbitsnbites',
-      repo: 'buildcache'
-    })
-  } else {
-    releaseInfo = await octokit.rest.repos.getReleaseByTag({
-      owner: 'mbitsnbites',
-      repo: 'buildcache',
-      tag: buildcacheTag
-    })
-    if (!releaseInfo) {
-      throw new Error(
-        `Unable to find a buildcache release with tag '${buildcacheTag}'`
-      )
-    }
-  }
-
-  // core.info(`Got release info: ${JSON.stringify(releaseInfo, null, 2)}`)
-  const buildCacheReleaseUrl = `https://github.com/mbitsnbites/buildcache/releases/download/${releaseInfo.data.tag_name}/${filename}`
+  const buildCacheReleaseUrl = `https://github.com/opencor/buildcache-action/releases/download/buildcache/${filename}`
 
   if (!buildCacheReleaseUrl) {
     throw new Error('Unable to determine release URL for buildcache')
   }
   core.info(`buildcache: installing from ${buildCacheReleaseUrl}`)
-  const buildcacheReleasePath = await toolcache.downloadTool(
-    buildCacheReleaseUrl
-  )
+  const buildcacheReleasePath =
+    await toolcache.downloadTool(buildCacheReleaseUrl)
   core.info(`buildcache: download path ${buildcacheReleasePath}`)
   return buildcacheReleasePath
 }
 
 export async function install(sourcePath: string): Promise<void> {
-  const destPath = await getInstallDir()
-  await io.mkdirP(destPath)
+  const buildcacheBinFolder = (await getInstallDir()) + '/buildcache/bin'
+  await io.mkdirP(buildcacheBinFolder)
 
-  let buildcacheFolder
-  switch (process.platform) {
-    case 'linux':
-      buildcacheFolder = await toolcache.extractTar(sourcePath, destPath)
-      break
-    case 'win32':
-    case 'darwin':
-    default:
-      buildcacheFolder = await toolcache.extractZip(sourcePath, destPath)
-      break
-  }
+  let buildcacheFolder = await toolcache.extractTar(
+    sourcePath,
+    buildcacheBinFolder
+  )
   core.info(`buildcache: unpacked folder ${buildcacheFolder}`)
 
-  const buildcacheBinFolder = path.resolve(
-    buildcacheFolder,
-    'buildcache',
-    'bin'
-  )
   const buildcacheBinPath = path.join(buildcacheBinFolder, 'buildcache')
   // windows has different filename and cannot do symbolic links
-  if (process.platform !== 'win32') {
+  if (os.platform() !== 'win32') {
     await exec.exec('ln', [
       '-s',
       buildcacheBinPath,
@@ -148,7 +117,7 @@ async function restore(): Promise<void> {
 
 async function run(): Promise<void> {
   try {
-    const downloadPath = await downloadLatest(getAccessToken())
+    const downloadPath = await downloadLatest()
     await install(downloadPath)
     await configure()
     await restore()

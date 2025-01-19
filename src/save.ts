@@ -30,7 +30,7 @@ async function save(stats: Stats): Promise<void> {
 }
 
 async function uploadBuildLog(): Promise<void> {
-  const artifactClient = artifact.create()
+  const artifactClient = new artifact.DefaultArtifactClient()
   const artifactName = 'buildcache_log'
 
   const cacheDir = await getCacheDir()
@@ -38,13 +38,16 @@ async function uploadBuildLog(): Promise<void> {
     cacheDir,
     getEnvVar('BUILDCACHE_LOG_FILE', 'buildcache.log')
   )
+
+  // Check that the log file exists before trying to upload it
+  if (fs.existsSync(logFile) === false) {
+    return
+  }
+
   const files = [logFile]
   // FIXME this won't strip the leading directories off custom log file locations correctly!
   // It still has the built in assumption that the log file is located inside the cache directory
   const rootDirectory = cacheDir
-  const options = {
-    continueOnError: false
-  }
 
   const uploadFlag = core.getInput('upload_buildcache_log')
   if (uploadFlag && uploadFlag === 'true') {
@@ -52,8 +55,7 @@ async function uploadBuildLog(): Promise<void> {
       const uploadResponse = await artifactClient.uploadArtifact(
         artifactName,
         files,
-        rootDirectory,
-        options
+        rootDirectory
       )
       core.info(
         `buildcache: uploaded buildcache.log file (consumed ${uploadResponse.size} bytes of artifact storage)`
