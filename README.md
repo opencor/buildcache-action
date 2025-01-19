@@ -1,11 +1,3 @@
-# Archived - feel free to fork!
-
-With apologies, I no longer use buildcache at all (ccache started working with react-native compiles shortly after I tried buildcache, so I started using ccache)
-
-I helped document ccache integration here https://reactnative.dev/docs/build-speed#use-a-compiler-cache
-
-As such I have no particular interest in this software and will not be maintaining it. Please feel free to fork it and continue development if you like
-
 # Accelerate builds using buildcache
 
 Use this GitHub Action to accelerate compilation in your GitHub workflows using [buildcache](https://github.com/mbitsnbites/buildcache)
@@ -32,7 +24,7 @@ jobs:
   ios:
   runs-on: macos-latest # also runs on ubuntu and windows
   steps:
-    - uses: mikehardy/buildcache-action@v2
+    - uses: opencor/buildcache-action@v1
 ```
 
 - 500MB cache, cache is in `$GITHUB_WORKSPACE`, just needs build integration and you're set!
@@ -41,8 +33,8 @@ When using with `actions/checkout@v2`, add this action as a step after the check
 
 ```yaml
 steps:
-  - uses: actions/checkout@v3
-  - uses: mikehardy/buildcache-action@v2
+  - uses: actions/checkout@v4
+  - uses: opencor/buildcache-action@v1
 ```
 #### Customize if you need to
 
@@ -60,7 +52,7 @@ jobs:
       BUILDCACHE_LOG_FILE: ../buildcache.log # optional: Log where you like
   runs-on: macos-latest
   steps:
-    - uses: mikehardy/buildcache-action@v2
+    - uses: opencor/buildcache-action@v1
       with:
         cache_key: ${{ matrix.os }} # optional: separate caches maybe?
         upload_buildcache_log: 'true' # optional: 100% cache misses? Find out why
@@ -115,7 +107,7 @@ The overall buid time should make it obvious, but the real test is your cache hi
 
 To verify things are working using the default configuration, look at the output of the workflow run, expand the "Post buildcache" step and check the statistics printed out. If you you "Re-run jobs" using the GitHub Actions web interface to re-run a job a second time, you _should_ see 100% hit rate, on quite a few objects.
 
-The output of this repositories [react-native compile test action](https://github.com/mikehardy/buildcache-action/actions/workflows/react-native-build-test.yml) are a good example.
+The output of this repositories [react-native compile test action](https://github.com/opencor/buildcache-action/actions/workflows/react-native-build-test.yml) are a good example.
 
 If you need more information, the default `BUILDCACHE_DEBUG` level of `2` is likely enough, you just need to add the `upload_buildcache_log` flag to your workflow integration and set it to `true`, then you may examine the actual output of buildcache as it worked, using the logfile attached as an artifact to the workflow run. If that still is not enough you may need a debug level of `1` See [Debugging Buildcache](https://github.com/mbitsnbites/buildcache/blob/master/doc/configuration.md#debugging) for more information.
 
@@ -139,7 +131,7 @@ If you experience low cache hit rates on a project with a largely static codebas
 
 This action does these things - if they interact poorly with your project, perhaps they could be altered slightly and made to work better if you propose a PR:
 
-- fetches the latest version of [buildcache](https://github.com/mbitsnbites/buildcache)
+- fetches our own copy of [buildcache](https://github.com/opencor/buildcache-action/releases)
 - installs it in your project directory as `buiildcache/bin/buildcache`
 - makes symoblic links from `buildcache` to `clang` and `clang++`
 - adds that directory to your `$GITHUB_PATH` for future steps
