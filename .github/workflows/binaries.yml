@@ -11,10 +11,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 'Windows'
+          - name: 'Windows (Intel)'
             os: windows-2022
             buildcache_ext: .exe
-            archive_extra: windows
+            archive_extra: windows-intel
+          - name: 'Windows (ARM)'
+            os: windows-11-arm
+            buildcache_ext: .exe
+            archive_extra: windows-arm
           - name: 'Linux (Intel)'
             os: ubuntu-22.04
             archive_extra: linux-intel
@@ -22,10 +26,10 @@ jobs:
             os: ubuntu-22.04-arm
             archive_extra: linux-arm
           - name: 'macOS (Intel)'
-            os: macos-13
+            os: macos-15-intel
             archive_extra: macos-intel
           - name: 'macOS (ARM)'
-            os: macos-14
+            os: macos-15
             archive_extra: macos-arm
     env:
       BUILDCACHE_VERSION: 0.31.5

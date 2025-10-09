@@ -21,8 +21,15 @@ import {
 // returns path to the downloaded file
 export async function downloadLatest(): Promise<string> {
   // Determine correct file name
-  let filename = 'buildcache-windows.tar.gz' // our default
+  let filename = ''
   switch (os.platform()) {
+    case 'win32':
+      if (os.arch() === 'x64') {
+        filename = 'buildcache-windows-intel.tar.gz'
+      } else {
+        filename = 'buildcache-windows-arm.tar.gz'
+      }
+      break
     case 'linux':
       if (os.arch() === 'x64') {
         filename = 'buildcache-linux-intel.tar.gz'
