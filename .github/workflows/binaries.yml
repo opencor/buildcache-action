@@ -28,7 +28,7 @@ jobs:
             os: macos-14
             archive_extra: macos-arm
     env:
-      BUILDCACHE_VERSION: 0.31.3
+      BUILDCACHE_VERSION: 0.31.5
     steps:
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@latest
