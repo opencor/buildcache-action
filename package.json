@@ -1,6 +1,6 @@
 {
   "name": "buildcache-action",
-  "version": "1.2.2",
+  "version": "3.0.0",
   "private": false,
   "description": "GitHub Action that installs and configures buildcache to accelerate compilation",
   "main": "dist/restore/index.js",

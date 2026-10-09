@@ -24,7 +24,7 @@ jobs:
   ios:
   runs-on: macos-latest # also runs on ubuntu and windows
   steps:
-    - uses: opencor/buildcache-action@v1
+    - uses: opencor/buildcache-action@v3
 ```
 
 - 500MB cache, cache is in `$GITHUB_WORKSPACE`, just needs build integration and you're set!
@@ -34,7 +34,7 @@ When using with `actions/checkout@v2`, add this action as a step after the check
 ```yaml
 steps:
   - uses: actions/checkout@v4
-  - uses: opencor/buildcache-action@v1
+  - uses: opencor/buildcache-action@v3
 ```
 #### Customize if you need to
 
@@ -52,7 +52,7 @@ jobs:
       BUILDCACHE_LOG_FILE: ../buildcache.log # optional: Log where you like
   runs-on: macos-latest
   steps:
-    - uses: opencor/buildcache-action@v1
+    - uses: opencor/buildcache-action@v3
       with:
         cache_key: ${{ matrix.os }} # optional: separate caches maybe?
         upload_buildcache_log: 'true' # optional: 100% cache misses? Find out why
